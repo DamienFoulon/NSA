@@ -29,15 +29,16 @@ describe('ipcPaths', () => {
 
   it('tries XDG_RUNTIME_DIR first, then the temp dirs, on Linux', () => {
     const paths = ipcPaths({ XDG_RUNTIME_DIR: '/run/user/1000' }, 'linux');
-    assert.equal(paths[0], '/run/user/1000/discord-ipc-0');
-    assert.ok(paths.includes('/tmp/discord-ipc-9'));
+    assert.equal(paths[0], join('/run/user/1000', 'discord-ipc-0'));
+    assert.ok(paths.includes(join('/tmp', 'discord-ipc-9')));
   });
 });
 
 /** Fake Discord client speaking the IPC protocol. */
 describe('DiscordIpc against a fake Discord client', () => {
   const dir = mkdtempSync(join(tmpdir(), 'nsa-ipc-'));
-  const path = join(dir, 'discord-ipc-0');
+  // Discord uses named pipes on Windows and Unix sockets elsewhere
+  const path = process.platform === 'win32' ? `\\\\?\\pipe\\nsa-test-${process.pid}` : join(dir, 'discord-ipc-0');
   const received: unknown[] = [];
   let server: Server;
 

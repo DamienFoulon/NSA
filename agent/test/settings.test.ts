@@ -11,7 +11,7 @@ describe('settings', () => {
   it('uses APPDATA on Windows and XDG_CONFIG_HOME on Linux', () => {
     assert.equal(configDir({ APPDATA: 'C:\\Users\\a\\AppData\\Roaming' }, 'win32'),
       join('C:\\Users\\a\\AppData\\Roaming', 'nsa-agent'));
-    assert.equal(configDir({ XDG_CONFIG_HOME: '/home/a/.config' }, 'linux'), '/home/a/.config/nsa-agent');
+    assert.equal(configDir({ XDG_CONFIG_HOME: '/home/a/.config' }, 'linux'), join('/home/a/.config', 'nsa-agent'));
   });
 
   it('saves and loads the settings file, readable by the user only', async () => {
@@ -19,7 +19,8 @@ describe('settings', () => {
     assert.deepEqual(await loadSettings(dir), {});
     await saveSettings({ serverUrl: 'https://a.example/', token: 't' }, dir);
     assert.deepEqual(await loadSettings(dir), { serverUrl: 'https://a.example/', token: 't' });
-    assert.equal(statSync(join(dir, 'config.json')).mode & 0o777, 0o600);
+    // Windows has no Unix permissions
+    if (process.platform !== 'win32') assert.equal(statSync(join(dir, 'config.json')).mode & 0o777, 0o600);
   });
 
   it('lets environment variables override the saved server', () => {
