@@ -1,0 +1,31 @@
+{
+  "name": "nsa-presence-server",
+  "version": "0.1.0",
+  "description": "Polls Nintendo Switch Online for a friend's presence and exposes it over HTTP",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DamienFoulon/NSA.git",
+    "directory": "server"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node --env-file-if-exists=.env dist/src/index.js",
+    "start:mock": "MOCK=1 node --env-file-if-exists=.env dist/src/index.js",
+    "login": "node dist/scripts/login.js",
+    "list-friends": "node --env-file-if-exists=.env dist/scripts/list-friends.js",
+    "test": "npm run build && node --test \"dist/test/*.test.js\""
+  },
+  "dependencies": {
+    "nxapi": "1.6.1-next.257"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}
