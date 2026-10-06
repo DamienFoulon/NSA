@@ -1,0 +1,25 @@
+{
+  "name": "nsa-presence-agent",
+  "version": "0.1.0",
+  "description": "Shows the Nintendo Switch presence served by nsa-presence-server as Discord Rich Presence",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DamienFoulon/NSA.git",
+    "directory": "agent"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node --env-file-if-exists=.env dist/src/index.js",
+    "test": "npm run build && node --test \"dist/test/*.test.js\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}
