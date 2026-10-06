@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { toActivity, type PresenceResponse } from '../src/presence.js';
+import type { PresenceResponse } from '../src/api.js';
+import { toActivity } from '../src/presence.js';
 
 const playing: PresenceResponse = {
   state: 'playing',
@@ -9,6 +10,7 @@ const playing: PresenceResponse = {
   since: '2026-10-06T12:00:00.000Z',
   updatedAt: '2026-10-06T12:01:00.000Z',
   stale: false,
+  linked: true,
 };
 
 describe('toActivity', () => {
@@ -27,8 +29,9 @@ describe('toActivity', () => {
     assert.equal(activity?.state, 'Nintendo Switch 2');
   });
 
-  it('clears the presence when stale, online, offline or unreachable', () => {
+  it('clears the presence when stale, unlinked, online, offline or unreachable', () => {
     assert.equal(toActivity({ ...playing, stale: true }, 'switch'), null);
+    assert.equal(toActivity({ ...playing, linked: false }, 'switch'), null);
     assert.equal(toActivity({ ...playing, state: 'online', game: null }, 'switch'), null);
     assert.equal(toActivity({ ...playing, state: 'offline', game: null }, 'switch'), null);
     assert.equal(toActivity(null, 'switch'), null);

@@ -1,7 +1,7 @@
 {
   "name": "nsa-presence-agent",
-  "version": "0.1.0",
-  "description": "Shows the Nintendo Switch presence served by nsa-presence-server as Discord Rich Presence",
+  "version": "0.2.0",
+  "description": "Shows your Nintendo Switch games as Discord Rich Presence",
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
@@ -15,11 +15,14 @@
   },
   "scripts": {
     "build": "tsc -p .",
-    "start": "node --env-file-if-exists=.env dist/src/index.js",
-    "test": "npm run build && node --test \"dist/test/*.test.js\""
+    "start": "node dist/src/index.js run",
+    "test": "npm run build && node --test \"dist/test/*.test.js\"",
+    "build:sea": "node scripts/build-sea.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "esbuild": "^0.28.2",
+    "postject": "^1.0.0-alpha.6",
     "typescript": "^5.9.0"
   }
 }

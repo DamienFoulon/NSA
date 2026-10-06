@@ -45,10 +45,11 @@ export class DiscordPresence {
       const ipc = this.ipc;
       if (!ipc?.connected || this.appliedKey === this.desiredKey) return;
       const key = this.desiredKey;
+      const activity = this.desired;
       try {
-        await ipc.setActivity(this.desired);
+        await ipc.setActivity(activity);
         this.appliedKey = key;
-        log('info', this.desired ? `Discord presence set: ${this.desired.details}` : 'Discord presence cleared');
+        log('info', activity ? `Discord presence set: ${activity.details}` : 'Discord presence cleared');
       } catch (err) {
         log('warn', `Could not update Discord presence: ${describeError(err)}`);
         ipc.close();
