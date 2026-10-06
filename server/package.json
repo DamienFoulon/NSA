@@ -1,7 +1,7 @@
 {
   "name": "nsa-presence-server",
-  "version": "0.1.0",
-  "description": "Polls Nintendo Switch Online for a friend's presence and exposes it over HTTP",
+  "version": "0.2.0",
+  "description": "Shares the Nintendo Switch presence of the friends of a shared Nintendo account with their agents",
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-or-later",
@@ -18,7 +18,6 @@
     "start": "node --env-file-if-exists=.env dist/src/index.js",
     "start:mock": "MOCK=1 node --env-file-if-exists=.env dist/src/index.js",
     "login": "node dist/scripts/login.js",
-    "list-friends": "node --env-file-if-exists=.env dist/scripts/list-friends.js",
     "test": "npm run build && node --test \"dist/test/*.test.js\""
   },
   "dependencies": {

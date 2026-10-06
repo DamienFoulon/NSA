@@ -7,12 +7,42 @@ import CoralApi, {
   type Friend_4,
 } from 'nxapi/coral';
 import { NintendoAccountAuthErrorResponse } from 'nxapi/nintendo-account';
-import type { NintendoConfig } from './config.js';
 import { FatalAuthError } from './errors.js';
-import type { PresenceSnapshot, PresenceSource } from './presence.js';
+import type { PresenceSnapshot } from './presence.js';
 
 // nxapi requires identifying the program in requests to third-party APIs.
-addUserAgent('nsa-presence-server/0.1.0 (+https://github.com/DamienFoulon/NSA)');
+addUserAgent('nsa-presence-server/0.2.0 (+https://github.com/DamienFoulon/NSA)');
+
+export interface Friend {
+  nsaId: string;
+  name: string;
+  /** When the friendship was created (ms since epoch) */
+  createdAt: number;
+  presence: PresenceSnapshot;
+}
+
+export interface NintendoUser {
+  nsaId: string;
+  name: string;
+}
+
+export interface SentFriendRequest {
+  id: string;
+  nsaId: string;
+  /** ms since epoch */
+  createdAt: number;
+}
+
+/** What the server needs from the shared Nintendo account. */
+export interface NintendoService {
+  getFriends(): Promise<Friend[]>;
+  /** null when no user has this friend code (format 1234-5678-9012) */
+  findUserByFriendCode(friendCode: string): Promise<NintendoUser | null>;
+  sendFriendRequest(nsaId: string): Promise<void>;
+  listSentFriendRequests(): Promise<SentFriendRequest[]>;
+  cancelFriendRequest(id: string): Promise<void>;
+  deleteFriend(nsaId: string): Promise<void>;
+}
 
 export async function login(sessionToken: string): Promise<CoralApi> {
   try {
@@ -49,31 +79,63 @@ export function toSnapshot(friend: Friend_4): PresenceSnapshot {
   };
 }
 
-export class NintendoPresenceSource implements PresenceSource {
+export class NintendoClient implements NintendoService {
   private api: CoralApi | null = null;
 
-  constructor(private readonly config: NintendoConfig) {}
+  constructor(private readonly sessionToken: string) {}
 
-  async fetch(): Promise<PresenceSnapshot> {
-    this.api ??= await login(this.config.sessionToken);
+  async getFriends(): Promise<Friend[]> {
+    const { friends } = await this.call(api => api.getFriendList());
+    return friends.map(friend => ({
+      nsaId: friend.nsaId,
+      name: friend.name,
+      createdAt: friend.friendCreatedAt * 1000,
+      presence: toSnapshot(friend),
+    }));
+  }
 
-    let friends: Friend_4[];
+  async findUserByFriendCode(friendCode: string): Promise<NintendoUser | null> {
     try {
-      ({ friends } = await this.api.getFriendList());
+      const user = await this.call(api => api.getUserByFriendCode(friendCode));
+      return { nsaId: user.nsaId, name: user.name };
+    } catch (err) {
+      if (err instanceof CoralErrorResponse &&
+          (err.status === CoralStatus.USER_NOT_FOUND || err.status === CoralStatus.RESOURCE_NOT_FOUND)) {
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  async sendFriendRequest(nsaId: string): Promise<void> {
+    await this.call(api => api.sendFriendRequest(nsaId));
+  }
+
+  async listSentFriendRequests(): Promise<SentFriendRequest[]> {
+    const { friendRequests } = await this.call(api => api.getSentFriendRequests());
+    return friendRequests.map(r => ({ id: r.id, nsaId: r.receiver.nsaId, createdAt: r.createdAt * 1000 }));
+  }
+
+  async cancelFriendRequest(id: string): Promise<void> {
+    await this.call(api => api.cancelFriendRequest(id));
+  }
+
+  async deleteFriend(nsaId: string): Promise<void> {
+    await this.call(api => api.deleteFriend(nsaId));
+  }
+
+  private async call<T>(request: (api: CoralApi) => Promise<T>): Promise<T> {
+    this.api ??= await login(this.sessionToken);
+    try {
+      return await request(this.api);
     } catch (err) {
       if (err instanceof CoralErrorResponse &&
           (err.status === CoralStatus.INVALID_TOKEN || err.status === CoralStatus.TOKEN_EXPIRED)) {
-        // Renewal failed: log in from scratch on the next poll.
+        // Renewal failed: log in from scratch on the next call.
         this.api = null;
       }
       throw toFatalIfRevoked(err);
     }
-
-    const friend = friends.find(f => f.nsaId === this.config.friendNsaId);
-    if (!friend) {
-      throw new Error('NSO_FRIEND_NSA_ID was not found in the friend list of the secondary account');
-    }
-    return toSnapshot(friend);
   }
 }
 

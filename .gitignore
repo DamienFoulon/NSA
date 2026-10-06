@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Server data (linked users)
+server/data/
+
 # Local configuration and secrets
 .env
 .env.*
